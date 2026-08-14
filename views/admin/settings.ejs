@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>站点设置 · <%= site.title %> 后台</title>
+  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+  <link rel="stylesheet" href="/public/css/main.css?v=<%= assetVersion %>" />
+  <link rel="stylesheet" href="/public/css/admin.css?v=<%= assetVersion %>" />
+</head>
+<body class="admin">
+  <header class="admin-topbar">
+    <a class="brand admin-brand" href="/admin/posts">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text"><strong><%= site.title %></strong><em>ADMIN</em></span>
+    </a>
+    <nav class="admin-topnav">
+      <a href="/" target="_blank" rel="noopener">查看站点 ↗</a>
+      <a href="/admin/posts">文章管理</a>
+      <a href="/admin/about">关于页</a>
+      <a href="/admin/media">图片</a>
+      <form method="post" action="/admin/logout"><button class="linklike" type="submit">退出</button></form>
+    </nav>
+  </header>
+
+  <main class="admin-main admin-single">
+    <h1 class="admin-h1">站点设置</h1>
+    <p class="admin-sub">保存后立即生效，无需重启。端口 / 密码 / 域名请改 <code>.env</code>。</p>
+
+    <% let linksText = ''; if (site.author.links) { linksText = Object.entries(site.author.links).map(([n, h]) => n + ' | ' + h).join('\n') } %>
+
+    <form class="admin-form" id="settings-form">
+      <div class="admin-fields-row">
+        <label class="admin-field">
+          <span>站点名称</span>
+          <input id="s-title" type="text" value="<%= site.title %>" />
+        </label>
+        <label class="admin-field">
+          <span>英文名</span>
+          <input id="s-titleEn" type="text" value="<%= site.titleEn %>" />
+        </label>
+      </div>
+      <label class="admin-field">
+        <span>副标题（tagline）</span>
+        <input id="s-tagline" type="text" value="<%= site.tagline %>" />
+      </label>
+      <label class="admin-field">
+        <span>站点描述</span>
+        <textarea id="s-description" rows="2"><%= site.description %></textarea>
+      </label>
+
+      <hr class="admin-divider" />
+      <h2 class="admin-section-title">作者</h2>
+      <div class="admin-fields-row">
+        <label class="admin-field">
+          <span>昵称</span>
+          <input id="s-name" type="text" value="<%= site.author.name %>" />
+        </label>
+        <label class="admin-field">
+          <span>邮箱</span>
+          <input id="s-email" type="text" value="<%= site.author.email %>" />
+        </label>
+      </div>
+      <label class="admin-field">
+        <span>一句话简介</span>
+        <input id="s-bio" type="text" value="<%= site.author.bio %>" />
+      </label>
+      <label class="admin-field">
+        <span>联系链接（每行一条：名称 | 网址）</span>
+        <textarea id="s-links" rows="4" placeholder="GitHub | https://github.com/xxx"><%= linksText %></textarea>
+      </label>
+
+      <hr class="admin-divider" />
+      <h2 class="admin-section-title">其他</h2>
+      <div class="admin-fields-row">
+        <label class="admin-field">
+          <span>首页每页文章数</span>
+          <input id="s-paginate" type="number" min="1" max="50" value="<%= site.paginate %>" />
+        </label>
+        <label class="admin-field admin-field-grow">
+          <span>页脚文案</span>
+          <input id="s-footer" type="text" value="<%= site.footer %>" />
+        </label>
+      </div>
+
+      <div class="admin-actions">
+        <button class="admin-save" id="btn-save" type="submit">保存设置</button>
+        <span class="admin-status" id="status"></span>
+      </div>
+    </form>
+  </main>
+
+  <script type="module" src="/public/js/admin-settings.js?v=<%= assetVersion %>"></script>
+</body>
+</html>

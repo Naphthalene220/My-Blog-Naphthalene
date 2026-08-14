@@ -1,7 +1,7 @@
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import markdownItKatex from 'markdown-it-katex'
-import { escapeAttr } from '../utils.js'
+import { escapeAttr, slugify } from '../utils.js'
 
 const md = new MarkdownIt({
   html: true,
@@ -87,8 +87,22 @@ function renderGallery(imageTokens) {
   return `<figure class="gallery" data-count="${imageTokens.length}">${items}</figure>\n`
 }
 
+// 给 h2/h3 标题加 id 锚点，供文内目录跳转使用。
+function addHeadingIds(html) {
+  const used = new Map()
+  return html.replace(/<(h[23])([^>]*)>(.*?)<\/\1>/gis, (match, tag, attrs, content) => {
+    if (/\bid\s*=/.test(attrs)) return match
+    const text = content.replace(/<[^>]+>/g, '').trim()
+    let id = slugify(text) || 'section'
+    const count = used.get(id) || 0
+    used.set(id, count + 1)
+    if (count > 0) id = `${id}-${count + 1}`
+    return `<${tag}${attrs} id="${escapeAttr(id)}">${content}</${tag}>`
+  })
+}
+
 export function renderMarkdown(source) {
-  return md.render(String(source ?? ''))
+  return addHeadingIds(md.render(String(source ?? '')))
 }
 
 export { md }

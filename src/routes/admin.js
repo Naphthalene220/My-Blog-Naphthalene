@@ -7,8 +7,8 @@ import { searchIndex } from '../store/search.js'
 import { readPage, writePage } from '../store/pages.js'
 import { renderMarkdown } from '../render/markdown.js'
 import { verifyPassword, requireAuth } from '../auth.js'
-import { UPLOADS_DIR } from '../paths.js'
-import { site } from '../config.js'
+import { IMAGES_DIR, UPLOADS_DIR } from '../paths.js'
+import { site, writeSiteConfig } from '../config.js'
 
 const router = Router()
 
@@ -144,6 +144,102 @@ router.get('/about', requireAuth, (req, res) => {
 
 router.post('/about', requireAuth, (req, res) => {
   writePage('about', req.body.content || '')
+  res.json({ ok: true })
+})
+
+// ---------- 站点设置 ----------
+router.get('/settings', requireAuth, (req, res) => {
+  res.render('admin/settings', {
+    pageTitle: '站点设置 · 后台',
+    site,
+    layout: false,
+  })
+})
+
+router.post('/settings', requireAuth, (req, res) => {
+  const b = req.body || {}
+  const author = b.author || {}
+  const links = {}
+  if (author.links && typeof author.links === 'object') {
+    for (const [name, href] of Object.entries(author.links)) {
+      const n = String(name).trim()
+      const h = String(href || '').trim()
+      if (n && h) links[n] = h
+    }
+  }
+  const next = {
+    ...site,
+    title: String(b.title ?? site.title),
+    titleEn: String(b.titleEn ?? site.titleEn),
+    tagline: String(b.tagline ?? site.tagline),
+    description: String(b.description ?? site.description),
+    paginate: Number(b.paginate) || site.paginate || 8,
+    footer: String(b.footer ?? site.footer),
+    author: {
+      ...site.author,
+      name: String(author.name ?? site.author.name),
+      bio: String(author.bio ?? site.author.bio),
+      email: String(author.email ?? site.author.email),
+      links,
+    },
+  }
+  writeSiteConfig(next)
+  res.json({ ok: true, site: next })
+})
+
+// ---------- 图片管理 ----------
+const IMG_EXTS = new Set(['.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif'])
+
+function listImages() {
+  const items = []
+  const addDir = (dir, prefix) => {
+    if (!fs.existsSync(dir)) return
+    for (const name of fs.readdirSync(dir)) {
+      const full = path.join(dir, name)
+      let stat
+      try {
+        stat = fs.statSync(full)
+      } catch {
+        continue
+      }
+      if (!stat.isFile()) continue
+      if (!IMG_EXTS.has(path.extname(name).toLowerCase())) continue
+      const rel = prefix ? `${prefix}/${name}` : name
+      items.push({
+        rel,
+        name,
+        url: `/content/images/${rel}`,
+        size: stat.size,
+        mtime: stat.mtimeMs,
+      })
+    }
+  }
+  addDir(IMAGES_DIR, '')
+  addDir(UPLOADS_DIR, 'uploads')
+  return items.sort((a, b) => b.mtime - a.mtime)
+}
+
+router.get('/media', requireAuth, (req, res) => {
+  res.render('admin/media', {
+    pageTitle: '图片管理 · 后台',
+    images: listImages(),
+    layout: false,
+  })
+})
+
+router.delete('/media', requireAuth, (req, res) => {
+  const rel = String(req.query.rel || '')
+  if (!rel || rel.includes('..') || rel.startsWith('/') || rel.includes('\\')) {
+    return res.status(400).json({ error: 'invalid' })
+  }
+  const target = path.resolve(IMAGES_DIR, rel)
+  if (target !== IMAGES_DIR && !target.startsWith(IMAGES_DIR + path.sep)) {
+    return res.status(400).json({ error: 'invalid' })
+  }
+  if (!fs.existsSync(target) || !fs.statSync(target).isFile()) {
+    return res.status(404).json({ error: 'not_found' })
+  }
+  fs.unlinkSync(target)
   res.json({ ok: true })
 })
 

@@ -1,3 +1,5 @@
+# 一个尝试Deepseek V4pro 0813+Dsh 的产物
+
 # 萘· Naphthalene
 
 **随笔 · 游记 · 技术 · 摄影**。
