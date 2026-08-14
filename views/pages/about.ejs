@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="<%= site.language %>">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="container">
+    <header class="page-head">
+      <h1 class="page-title">关于我</h1>
+      <p class="page-desc"><%= site.author.name %> · <%= site.author.bio %></p>
+    </header>
+
+    <div class="typography about-body">
+      <%- content %>
+    </div>
+
+    <% if (site.author.links && Object.keys(site.author.links).length) { %>
+      <div class="about-links">
+        <% for (const [name, href] of Object.entries(site.author.links)) { %>
+          <a class="link-block" href="<%= href %>" rel="noopener"><%= name %> →</a>
+        <% } %>
+      </div>
+    <% } %>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

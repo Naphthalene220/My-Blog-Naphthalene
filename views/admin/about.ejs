@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>关于我 · <%= site.title %> 后台</title>
+  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="/public/css/main.css?v=<%= assetVersion %>" />
+  <link rel="stylesheet" href="/public/css/admin.css?v=<%= assetVersion %>" />
+</head>
+<body class="admin">
+  <header class="admin-topbar">
+    <a class="brand admin-brand" href="/admin/posts">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text"><strong><%= site.title %></strong><em>ADMIN</em></span>
+    </a>
+    <nav class="admin-topnav">
+      <a href="/about" target="_blank" rel="noopener">查看关于页 ↗</a>
+      <a href="/admin/posts">文章管理</a>
+      <form method="post" action="/admin/logout"><button class="linklike" type="submit">退出</button></form>
+    </nav>
+  </header>
+
+  <main class="admin-main admin-single">
+    <h1 class="admin-h1">关于我</h1>
+    <p class="admin-sub">Markdown 格式，保存后立即生效。</p>
+    <textarea id="about-source" class="admin-textarea" spellcheck="false"><%= source %></textarea>
+    <div class="admin-actions">
+      <button class="admin-save" id="about-save" type="button">保存</button>
+      <button class="admin-ghost" id="about-preview" type="button">预览</button>
+      <span class="admin-status" id="about-status"></span>
+    </div>
+    <div class="typography admin-preview-body" id="about-preview-body" hidden></div>
+  </main>
+
+  <script type="module" src="/public/js/admin-about.js?v=<%= assetVersion %>"></script>
+</body>
+</html>

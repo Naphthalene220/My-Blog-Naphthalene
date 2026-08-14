@@ -1,0 +1,19 @@
+{
+  "title": "萘",
+  "titleEn": "Naphthalene",
+  "tagline": "随笔 · 游记 · 技术 · 摄影",
+  "description": "一座沉默的个人档案库，收录随笔、游记、技术札记与摄影。",
+  "language": "zh-CN",
+  "baseUrl": "http://localhost:3000",
+  "author": {
+    "name": "Nye",
+    "bio": "呼呼大睡",
+    "email": "naph220@126.com",
+    "links": {
+      "GitHub": "https://github.com/Naphthalene220",
+      "RSS": "/feed.xml"
+    }
+  },
+  "paginate": 8,
+  "footer": "My wars are laid away in books."
+}

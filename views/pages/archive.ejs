@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="<%= site.language %>">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="container">
+    <header class="page-head">
+      <h1 class="page-title"><span class="idx">02</span><%= activeTag ? '# ' + activeTag : '归档' %></h1>
+      <p class="page-desc">
+        <% if (activeTag) { %>
+          含「<%= activeTag %>」标签的文章共 <%= archive.reduce((n, g) => n + g.posts.length, 0) %> 篇。
+        <% } else { %>
+          按时间排列的全部文章，可从右侧标签栏筛选。
+        <% } %>
+      </p>
+    </header>
+
+    <div class="archive-layout">
+      <div class="archive-main">
+        <% if (!archive.length) { %>
+          <p class="muted">该标签下暂无文章。<a href="/archive">清除筛选</a></p>
+        <% } %>
+
+        <% for (const group of archive) { %>
+          <section class="archive-group">
+            <h2 class="archive-year"><%= group.year %><span class="archive-count"><%= group.posts.length %></span></h2>
+            <ul class="post-list">
+              <% for (const post of group.posts) { %>
+                <%- include('../partials/post-row', { post }) %>
+              <% } %>
+            </ul>
+          </section>
+        <% } %>
+      </div>
+
+      <aside class="archive-sidebar">
+        <h2 class="sidebar-title"><span class="idx">TAGS</span>标签</h2>
+        <ul class="tag-bar">
+          <% for (const t of tags) { %>
+            <li>
+              <a href="/archive?tag=<%= encodeURIComponent(t.name) %>" class="<%= activeTag === t.name ? 'is-active' : '' %>">
+                <span class="tag-bar-name">#<%= t.name %></span>
+                <span class="tag-bar-count"><%= t.count %></span>
+              </a>
+            </li>
+          <% } %>
+        </ul>
+        <% if (activeTag) { %>
+          <a class="tag-bar-clear" href="/archive">清除筛选 ×</a>
+        <% } %>
+      </aside>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

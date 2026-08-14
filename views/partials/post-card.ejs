@@ -1,0 +1,23 @@
+<article class="post-card reveal" data-reveal>
+  <a class="post-card-link" href="/posts/<%= post.slug %>">
+    <% if (post.cover) { %>
+      <div class="post-card-cover">
+        <img src="<%= post.cover %>" alt="<%= post.title %>" loading="lazy" decoding="async" />
+      </div>
+    <% } %>
+    <div class="post-card-body">
+      <div class="post-card-meta">
+        <time datetime="<%= post.dateISO %>"><%= post.dateFormatted %></time>
+        <span class="dot">·</span>
+        <span><%= post.readingTime %> 分钟</span>
+      </div>
+      <h3 class="post-card-title"><%= post.title %></h3>
+      <p class="post-card-summary"><%= post.summary %></p>
+      <% if (post.tags && post.tags.length) { %>
+        <div class="post-card-tags">
+          <% for (const t of post.tags) { %><span class="tag">#<%= t %></span><% } %>
+        </div>
+      <% } %>
+    </div>
+  </a>
+</article>

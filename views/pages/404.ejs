@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="<%= site.language %>">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="container">
+    <div class="error-page">
+      <div class="error-deco" aria-hidden="true"><span></span></div>
+      <h1 class="error-code">404</h1>
+      <p class="error-msg">这里空无一物，只有沉默的针叶林。</p>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <p class="muted"><%= error %></p>
+      <% } %>
+      <a class="link-block" href="/">← 返回首页</a>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

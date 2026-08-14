@@ -1,0 +1,19 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><%= (pageTitle && pageTitle !== site.title) ? pageTitle + ' · ' + site.title : site.title %></title>
+<meta name="description" content="<%= description || site.description %>" />
+<meta name="author" content="<%= site.author.name %>" />
+<meta name="color-scheme" content="light dark" />
+<link rel="alternate" type="application/rss+xml" title="<%= site.title %> RSS" href="/feed.xml" />
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+<link rel="stylesheet" href="/vendor/katex/katex.min.css" />
+<link rel="stylesheet" href="/public/css/main.css?v=<%= assetVersion %>" />
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('taiga-theme')
+      var dark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      if (dark) document.documentElement.setAttribute('data-theme', 'dark')
+    } catch (e) {}
+  })()
+</script>

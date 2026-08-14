@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="<%= site.language %>">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="container">
+    <header class="page-head">
+      <h1 class="page-title">搜索</h1>
+      <p class="page-desc">在标题、摘要、正文与标签中检索。</p>
+    </header>
+
+    <form class="search-form" action="/search" method="get" role="search">
+      <input id="search-input" type="search" name="q" value="<%= q %>" placeholder="输入关键词，例如：森林 / 摄影 / 代码" autocomplete="off" />
+      <button type="submit">搜索</button>
+    </form>
+
+    <div class="search-results" id="search-results">
+      <% if (q) { %>
+        <% if (results.length) { %>
+          <p class="search-count">找到 <%= results.length %> 条结果：</p>
+          <ul class="search-list">
+            <% for (const r of results) { %>
+              <li class="search-item reveal" data-reveal>
+                <a href="/posts/<%= r.post.slug %>">
+                  <span class="search-item-meta"><%= r.post.dateFormatted %></span>
+                  <h3><%= r.post.title %></h3>
+                  <p class="search-snippet"><%- r.snippet %></p>
+                </a>
+              </li>
+            <% } %>
+          </ul>
+        <% } else { %>
+          <p class="muted">没有找到与「<%= q %>」相关的内容。</p>
+        <% } %>
+      <% } else { %>
+        <p class="muted">输入关键词开始搜索。</p>
+      <% } %>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="<%= site.language %>">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-deco" aria-hidden="true">
+        <span class="hero-ring"></span>
+        <span class="hero-slash"></span>
+      </div>
+      <p class="hero-kicker"><%= site.titleEn %> <span class="sep">/</span> <%= site.tagline %></p>
+      <h1 class="hero-title"><%= site.title %><span class="hero-title-dot">.</span></h1>
+      <p class="hero-desc"><%= site.description %></p>
+      <div class="hero-rule"></div>
+    </section>
+
+    <section class="section" aria-label="最新文章">
+      <div class="section-head">
+        <h2 class="section-title"><span class="idx">01</span>最新文章</h2>
+        <a class="section-more" href="/archive">全部归档 →</a>
+      </div>
+
+      <% if (featured) { %>
+        <a class="featured reveal" data-reveal href="/posts/<%= featured.slug %>">
+          <div class="featured-media">
+            <% if (featured.cover) { %>
+              <img src="<%= featured.cover %>" alt="<%= featured.title %>" loading="lazy" decoding="async" />
+            <% } else { %>
+              <span class="featured-geo" aria-hidden="true"></span>
+            <% } %>
+          </div>
+          <div class="featured-body">
+            <div class="post-card-meta">
+              <time datetime="<%= featured.dateISO %>"><%= featured.dateFormatted %></time>
+            </div>
+            <h3 class="featured-title"><%= featured.title %></h3>
+            <p class="featured-summary"><%= featured.summary %></p>
+            <span class="featured-cta">阅读全文 →</span>
+          </div>
+        </a>
+      <% } %>
+
+      <% if (posts.length) { %>
+        <div class="post-grid">
+          <% const list = featured ? posts.slice(1) : posts; %>
+          <% for (const post of list) { %>
+            <%- include('../partials/post-card', { post }) %>
+          <% } %>
+        </div>
+      <% } else { %>
+        <p class="muted">还没有文章。前往 <a href="/admin">后台</a> 写第一篇。</p>
+      <% } %>
+
+      <% if (pagination.pages > 1) { %>
+        <nav class="pagination" aria-label="分页">
+          <% if (pagination.hasPrev) { %>
+            <a class="page-btn" href="<%= pagination.page === 2 ? '/' : '/?page=' + (pagination.page - 1) %>">← 上一页</a>
+          <% } else { %><span class="page-btn is-disabled">← 上一页</span><% } %>
+          <span class="page-info"><%= pagination.page %> / <%= pagination.pages %></span>
+          <% if (pagination.hasNext) { %>
+            <a class="page-btn" href="/?page=<%= pagination.page + 1 %>">下一页 →</a>
+          <% } else { %><span class="page-btn is-disabled">下一页 →</span><% } %>
+        </nav>
+      <% } %>
+    </section>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

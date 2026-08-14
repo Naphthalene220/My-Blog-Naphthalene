@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>文章管理 · <%= site.title %> 后台</title>
+  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+  <link rel="stylesheet" href="/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="/public/css/main.css?v=<%= assetVersion %>" />
+  <link rel="stylesheet" href="/public/css/admin.css?v=<%= assetVersion %>" />
+</head>
+<body class="admin">
+  <header class="admin-topbar">
+    <a class="brand admin-brand" href="/admin/posts">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text"><strong><%= site.title %></strong><em>ADMIN</em></span>
+    </a>
+    <nav class="admin-topnav">
+      <a href="/" target="_blank" rel="noopener">查看站点 ↗</a>
+      <a href="/admin/about">关于页</a>
+      <form method="post" action="/admin/logout"><button class="linklike" type="submit">退出</button></form>
+    </nav>
+  </header>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <button class="admin-new" id="btn-new" type="button">＋ 新建文章</button>
+      <p class="admin-sidebar-count">共 <%= posts.length %> 篇</p>
+      <ul class="admin-list" id="admin-list">
+        <% for (const p of posts) { %>
+          <li class="admin-list-item <%= p.draft ? 'is-draft' : '' %>" data-slug="<%= p.slug %>">
+            <span class="admin-list-title"><%= p.title %></span>
+            <span class="admin-list-meta"><%= p.date %><% if (p.draft) { %> · 草稿<% } %></span>
+          </li>
+        <% } %>
+      </ul>
+    </aside>
+
+    <main class="admin-main">
+      <form class="admin-form" id="post-form">
+        <input type="hidden" id="f-slug" />
+        <div class="admin-field admin-field-title">
+          <input id="f-title" type="text" placeholder="文章标题" required />
+        </div>
+        <div class="admin-fields-row">
+          <label class="admin-field">
+            <span>日期</span>
+            <input id="f-date" type="date" />
+          </label>
+          <label class="admin-field admin-field-grow">
+            <span>标签（逗号分隔）</span>
+            <input id="f-tags" type="text" placeholder="森林, 摄影" />
+          </label>
+        </div>
+        <label class="admin-field">
+          <span>摘要</span>
+          <textarea id="f-summary" rows="2" placeholder="列表页展示的摘要（留空则自动截取正文）"></textarea>
+        </label>
+        <div class="admin-fields-row">
+          <label class="admin-field admin-field-grow">
+            <span>封面图 URL</span>
+            <input id="f-cover" type="text" placeholder="/content/images/uploads/..." />
+          </label>
+          <label class="admin-field admin-field-check">
+            <input id="f-draft" type="checkbox" />
+            <span>草稿</span>
+          </label>
+        </div>
+
+        <div class="admin-editor-toolbar">
+          <span class="admin-editor-label">正文（Markdown）</span>
+          <span class="admin-editor-tools">
+            <button type="button" id="btn-upload-inline">插入图片</button>
+            <button type="button" id="btn-upload-cover">上传封面</button>
+            <button type="button" id="btn-preview">预览</button>
+          </span>
+        </div>
+        <textarea id="f-content" class="admin-textarea" spellcheck="false" placeholder="# 标题&#10;&#10;正文……支持代码高亮、数学公式与图片画廊。"></textarea>
+
+        <div class="admin-actions">
+          <button class="admin-save" id="btn-save" type="submit">保存</button>
+          <button class="admin-delete" id="btn-delete" type="button" hidden>删除</button>
+          <span class="admin-status" id="admin-status"></span>
+        </div>
+      </form>
+
+      <section class="admin-preview" id="admin-preview" hidden>
+        <div class="admin-preview-head">
+          <span>实时预览</span>
+          <button type="button" id="btn-preview-close">关闭</button>
+        </div>
+        <div class="typography admin-preview-body" id="admin-preview-body"></div>
+      </section>
+    </main>
+  </div>
+
+  <input type="file" id="file-input" accept="image/*" hidden />
+  <script type="module" src="/public/js/admin.js?v=<%= assetVersion %>"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="<%= site.title %> 首页">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-text">
+        <strong><%= site.title %></strong>
+        <em><%= site.titleEn %></em>
+      </span>
+    </a>
+    <nav class="site-nav" aria-label="主导航">
+      <a href="/" class="<%= helpers.activeClass('/') %>"><i>01</i>首页</a>
+      <a href="/archive" class="<%= helpers.activeClass('/archive') %>"><i>02</i>归档</a>
+      <a href="/about" class="<%= helpers.activeClass('/about') %>"><i>03</i>关于</a>
+    </nav>
+    <form class="header-search" action="/search" method="get" role="search">
+      <span class="header-search-icon" aria-hidden="true">⌕</span>
+      <input id="header-search-input" type="search" name="q" placeholder="搜索…" autocomplete="off" aria-label="站内搜索" />
+      <div class="header-search-drop" id="header-search-drop" hidden></div>
+    </form>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换日间/夜间模式" title="切换主题">
+      <span class="icon-sun">◐</span>
+    </button>
+  </div>
+</header>
