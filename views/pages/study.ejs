@@ -12,6 +12,11 @@
       <p class="study-eyebrow">UNIVERSITY / NOTEBOOK</p>
       <h1 class="page-title"><span class="idx">03</span>大学学习笔记</h1>
       <p class="page-desc">按学年、学期、课程与章节整理的知识档案。</p>
+      <div class="study-stats" aria-label="当前归档统计">
+        <div><strong><%= stats.notes %></strong><span>篇笔记</span></div>
+        <div><strong><%= stats.courses %></strong><span>门课程</span></div>
+        <div><strong><%= stats.semesters %></strong><span>个学期</span></div>
+      </div>
     </header>
 
     <form class="study-filters" action="/study" method="get">
@@ -47,7 +52,14 @@
 
     <div class="study-layout">
       <div class="study-main">
-        <% if (!archive.length) { %><p class="muted">当前筛选下暂无学习笔记。<a href="/study">查看全部</a></p><% } %>
+        <% if (!archive.length) { %>
+          <div class="study-empty">
+            <span aria-hidden="true">∅</span>
+            <h2>还没有匹配的学习笔记</h2>
+            <p>调整筛选条件，或前往后台整理新的课程内容。</p>
+            <a href="/study">查看全部笔记 →</a>
+          </div>
+        <% } %>
         <% for (const semester of archive) { %>
           <section class="semester-group">
             <header class="semester-title">
@@ -62,7 +74,7 @@
                       <% if (course.code) { %><span class="course-code"><%= course.code %></span><% } %>
                       <h2><%= course.name %></h2>
                     </div>
-                    <span class="course-count"><%= course.count %> 篇</span>
+                    <span class="course-count"><strong><%= course.count %></strong> 篇笔记<br><small>更新于 <%= helpers.dateLong(course.updated) %></small></span>
                   </header>
                   <% for (const chapter of course.chapters) { %>
                     <section class="chapter-group">

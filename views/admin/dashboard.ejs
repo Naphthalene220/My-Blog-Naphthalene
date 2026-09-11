@@ -59,6 +59,10 @@
         </div>
 
         <section class="admin-note-fields" id="note-fields" hidden>
+          <header class="admin-note-fields-head">
+            <div><strong>课程归档信息</strong><span>用于在学习页自动分组和排序</span></div>
+            <span class="admin-note-fields-mark">NOTE / META</span>
+          </header>
           <div class="admin-fields-row">
             <label class="admin-field">
               <span>学年</span>
@@ -81,9 +85,16 @@
             </label>
           </div>
           <div class="admin-fields-row admin-note-course-row">
-            <label class="admin-field admin-field-grow">
+            <label class="admin-field admin-field-grow admin-course-field">
               <span>课程名称</span>
-              <input id="f-course" type="text" placeholder="高等数学" />
+              <div class="admin-course-combobox" id="course-combobox">
+                <input id="f-course" type="text" placeholder="输入或选择已有课程" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="course-options" />
+                <span class="admin-course-chevron" aria-hidden="true">⌄</span>
+                <div class="admin-course-options" id="course-options" role="listbox" hidden>
+                  <% for (const course of courseOptions) { %><button type="button" role="option" data-course-option="<%= course %>"><span><%= course %></span><small>历史课程</small></button><% } %>
+                  <p class="admin-course-empty" data-course-empty hidden>没有匹配项，保存后会加入课程列表</p>
+                </div>
+              </div>
             </label>
             <label class="admin-field">
               <span>课程代码（可选）</span>

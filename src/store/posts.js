@@ -212,6 +212,15 @@ class PostStore {
     )
   }
 
+  courses(includeDrafts = false) {
+    const list = includeDrafts ? this.sorted : this.published
+    return [...new Set(
+      list
+        .filter((post) => post.type === 'note' && post.course)
+        .map((post) => post.course.trim()),
+    )].sort((a, b) => a.localeCompare(b, 'zh'))
+  }
+
   studyArchive(filters = {}) {
     const semesters = new Map()
     for (const note of this.notes(filters)) {

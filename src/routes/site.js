@@ -77,15 +77,22 @@ router.get('/study', (req, res) => {
   const allNotes = store.publishedNotes
   const years = [...new Set(allNotes.map((note) => note.academicYear))].sort().reverse()
   const courses = [...new Set(allNotes.map((note) => note.course))].sort((a, b) => a.localeCompare(b, 'zh'))
+  const filteredNotes = store.notes(filters)
+  const archive = store.studyArchive(filters)
   res.render('pages/study', {
     pageTitle: '大学学习笔记',
     description: '按学年、学期、课程与章节整理的大学学习笔记。',
-    archive: store.studyArchive(filters),
+    archive,
     filters,
     years,
     courses,
     kinds: NOTE_KINDS,
     tags: store.tags('note'),
+    stats: {
+      notes: filteredNotes.length,
+      courses: new Set(filteredNotes.map((note) => note.course)).size,
+      semesters: archive.length,
+    },
   })
 })
 

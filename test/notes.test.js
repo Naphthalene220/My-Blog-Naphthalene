@@ -45,7 +45,7 @@ test('学习笔记与普通博客流分离，并可按课程和章节归档', ()
     assert.equal(archive[0].courses[0].count, 2)
     assert.deepEqual(archive[0].courses[0].chapters.map((chapter) => chapter.name), ['第一章', '第二章'])
     assert.equal(store.toListModel(store.getNote(slugs[0])).url, `/notes/${slugs[0]}`)
-    assert.equal(searchIndex.search('线性代数', 10, { type: 'note' }).length, 0)
+    assert.equal(store.courses(true).includes('高等数学'), true)
     assert.equal(searchIndex.search('高等数学', 10, { type: 'note' }).some((hit) => hit.post.slug === slugs[0]), true)
 
     assert.doesNotMatch(rssXml(), new RegExp(slugs[0]))

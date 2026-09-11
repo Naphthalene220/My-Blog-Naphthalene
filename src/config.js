@@ -29,7 +29,7 @@ export function writeSiteConfig(nextSite) {
 }
 
 // 静态资源版本号：修改 public/ 下的 CSS/JS 后 +1，用于破坏浏览器缓存。
-export const assetVersion = '7'
+export const assetVersion = '9'
 
 export const env = {
   isProduction: process.env.NODE_ENV === 'production',

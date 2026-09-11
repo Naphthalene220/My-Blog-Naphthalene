@@ -108,7 +108,8 @@ router.post('/preview', requireAuth, requireCsrf, (req, res) => {
 router.get('/', requireAuth, (req, res) => res.redirect('/admin/posts'))
 
 router.get('/posts', requireAuth, (req, res) => {
-  const posts = store.all(true).map((p) => ({
+  const allPosts = store.all(true)
+  const posts = allPosts.map((p) => ({
     slug: p.slug,
     type: p.type,
     title: p.title,
@@ -122,6 +123,7 @@ router.get('/posts', requireAuth, (req, res) => {
     posts,
     site,
     noteKinds: NOTE_KINDS,
+    courseOptions: store.courses(true),
     layout: false,
   })
 })

@@ -29,9 +29,13 @@ const previewBody = $('admin-preview-body')
 const fileInput = $('file-input')
 const noteFields = $('note-fields')
 const typeFilter = $('admin-type-filter')
+const courseOptions = $('course-options')
+const courseCombobox = $('course-combobox')
+const courseEmpty = courseOptions.querySelector('[data-course-empty]')
 
 let currentSlug = ''
 let uploadMode = 'inline' // 'inline' | 'cover'
+let activeCourseIndex = -1
 
 function setStatus(msg, kind = 'ok') {
   statusEl.textContent = msg
@@ -56,6 +60,7 @@ function toggleNoteFields() {
   noteFields.hidden = !isNote
   form.academicYear.required = isNote
   form.course.required = isNote
+  if (!isNote) closeCourseOptions()
 }
 
 function clearForm() {
@@ -156,6 +161,75 @@ function upsertListItem(post) {
   applyTypeFilter()
 }
 
+function rememberCourse(course) {
+  const value = String(course || '').trim()
+  if (!value) return
+  const exists = courseButtons().some((option) => option.dataset.courseOption === value)
+  if (exists) return
+  const option = document.createElement('button')
+  option.type = 'button'
+  option.role = 'option'
+  option.dataset.courseOption = value
+  const name = document.createElement('span')
+  name.textContent = value
+  const hint = document.createElement('small')
+  hint.textContent = '历史课程'
+  option.append(name, hint)
+  courseOptions.insertBefore(option, courseEmpty)
+}
+
+function courseButtons() {
+  return [...courseOptions.querySelectorAll('button[data-course-option]')]
+}
+
+function visibleCourseButtons() {
+  return courseButtons().filter((button) => !button.hidden)
+}
+
+function filterCourseOptions() {
+  const query = form.course.value.trim().toLocaleLowerCase('zh-CN')
+  let matches = 0
+  for (const button of courseButtons()) {
+    const visible = !query || button.dataset.courseOption.toLocaleLowerCase('zh-CN').includes(query)
+    button.hidden = !visible
+    button.classList.remove('is-active')
+    button.setAttribute('aria-selected', 'false')
+    if (visible) matches += 1
+  }
+  courseEmpty.hidden = matches > 0
+  activeCourseIndex = -1
+  openCourseOptions()
+}
+
+function openCourseOptions() {
+  courseOptions.hidden = false
+  form.course.setAttribute('aria-expanded', 'true')
+}
+
+function closeCourseOptions() {
+  courseOptions.hidden = true
+  form.course.setAttribute('aria-expanded', 'false')
+  activeCourseIndex = -1
+}
+
+function selectCourse(button) {
+  form.course.value = button.dataset.courseOption
+  closeCourseOptions()
+  form.course.focus()
+}
+
+function moveCourseSelection(direction) {
+  const choices = visibleCourseButtons()
+  if (!choices.length) return
+  activeCourseIndex = (activeCourseIndex + direction + choices.length) % choices.length
+  choices.forEach((button, index) => {
+    const active = index === activeCourseIndex
+    button.classList.toggle('is-active', active)
+    button.setAttribute('aria-selected', String(active))
+  })
+  choices[activeCourseIndex].scrollIntoView({ block: 'nearest' })
+}
+
 async function save() {
   const data = collect()
   if (!data.title) return setStatus('请填写标题', 'err')
@@ -182,6 +256,7 @@ async function save() {
       type: data.type,
       course: data.course,
     })
+    if (data.type === 'note') rememberCourse(data.course)
     setStatus('已保存')
   } catch (e) {
     setStatus('保存失败：' + e.message, 'err')
@@ -262,6 +337,30 @@ fileInput.addEventListener('change', () => {
 })
 
 form.type.addEventListener('change', toggleNoteFields)
+form.course.addEventListener('focus', filterCourseOptions)
+form.course.addEventListener('input', filterCourseOptions)
+form.course.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault()
+    if (courseOptions.hidden) filterCourseOptions()
+    moveCourseSelection(e.key === 'ArrowDown' ? 1 : -1)
+  } else if (e.key === 'Enter' && !courseOptions.hidden && activeCourseIndex >= 0) {
+    e.preventDefault()
+    selectCourse(visibleCourseButtons()[activeCourseIndex])
+  } else if (e.key === 'Escape') {
+    closeCourseOptions()
+  }
+})
+
+courseOptions.addEventListener('mousedown', (e) => e.preventDefault())
+courseOptions.addEventListener('click', (e) => {
+  const button = e.target.closest('button[data-course-option]')
+  if (button) selectCourse(button)
+})
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#course-combobox')) closeCourseOptions()
+})
 
 let activeTypeFilter = 'all'
 function applyTypeFilter() {
