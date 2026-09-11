@@ -1,13 +1,13 @@
 {
   "name": "taiga-blog",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "泰加 TAIGA —— 个人博客：随笔 · 游记 · 技术 · 摄影（森林绿构成主义 · 冷色调）",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test"
+    "test": "node --test --test-concurrency=1"
   },
   "engines": {
     "node": ">=18"

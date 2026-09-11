@@ -9,7 +9,7 @@
   <main class="container">
     <header class="page-head">
       <h1 class="page-title">搜索</h1>
-      <p class="page-desc">在标题、摘要、正文与标签中检索。</p>
+      <p class="page-desc">在文章与学习笔记的标题、课程、章节、摘要、正文和标签中检索。</p>
     </header>
 
     <form class="search-form" action="/search" method="get" role="search">
@@ -24,8 +24,8 @@
           <ul class="search-list">
             <% for (const r of results) { %>
               <li class="search-item reveal" data-reveal>
-                <a href="/posts/<%= r.post.slug %>">
-                  <span class="search-item-meta"><%= r.post.dateFormatted %></span>
+                <a href="<%= r.post.url %>">
+                  <span class="search-item-meta"><%= r.post.type === 'note' ? '学习笔记 · ' + r.post.course + ' · ' : '' %><%= r.post.dateFormatted %></span>
                   <h3><%= r.post.title %></h3>
                   <p class="search-snippet"><%- r.snippet %></p>
                 </a>

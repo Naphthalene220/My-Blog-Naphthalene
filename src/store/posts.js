@@ -5,6 +5,15 @@ import { POSTS_DIR } from '../paths.js'
 import { renderMarkdown } from '../render/markdown.js'
 import { stripMarkdown, makeExcerpt, readingTime, slugify } from '../utils.js'
 
+export const NOTE_KINDS = {
+  lecture: '课堂',
+  textbook: '教材',
+  lab: '实验',
+  assignment: '作业',
+  review: '复习',
+  other: '其他',
+}
+
 function normalizeTags(tags) {
   if (!tags) return []
   if (Array.isArray(tags)) return tags.map((t) => String(t).trim()).filter(Boolean)
@@ -19,6 +28,21 @@ export function isSafeSlug(value) {
   return slug.length > 0 && slug.length <= 120 && /^[\p{L}\p{N}_-]+$/u.test(slug)
 }
 
+export function isValidAcademicYear(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{4})$/)
+  return Boolean(match && Number(match[2]) === Number(match[1]) + 1)
+}
+
+function normalizeType(value) {
+  return value === 'note' ? 'note' : 'post'
+}
+
+function normalizeChapterOrder(value) {
+  if (value === '' || value == null) return null
+  const n = Number(value)
+  return Number.isFinite(n) && n >= 0 ? n : null
+}
+
 function toDate(value, fallback) {
   if (value instanceof Date) return value
   const d = new Date(value)
@@ -30,8 +54,10 @@ function parsePost(file) {
   const { data, content } = matter(raw)
   const slug = String(data.slug || path.basename(file, path.extname(file)))
   const date = toDate(data.date, new Date(0))
-  return {
+  const type = normalizeType(data.type)
+  const post = {
     slug,
+    type,
     title: data.title || slug,
     date,
     updated: data.updated ? toDate(data.updated, null) : null,
@@ -40,10 +66,47 @@ function parsePost(file) {
     cover: String(data.cover || ''),
     draft: Boolean(data.draft),
     lang: String(data.lang || 'zh'),
+    academicYear: String(data.academicYear || '').trim(),
+    term: Number(data.term) || null,
+    course: String(data.course || '').trim(),
+    courseCode: String(data.courseCode || '').trim(),
+    chapter: String(data.chapter || '').trim(),
+    chapterOrder: normalizeChapterOrder(data.chapterOrder),
+    noteKind: NOTE_KINDS[data.noteKind] ? data.noteKind : '',
     source: content || '',
     file,
     _plain: null,
     _html: null,
+  }
+  if (type === 'note') validateNoteMetadata(post)
+  return post
+}
+
+function validateNoteMetadata(input) {
+  if (!isValidAcademicYear(input.academicYear)) {
+    const err = new Error('学年格式应为连续年份，例如 2026-2027')
+    err.code = 'INVALID_POST'
+    throw err
+  }
+  if (![1, 2].includes(Number(input.term))) {
+    const err = new Error('学期只能选择第一或第二学期')
+    err.code = 'INVALID_POST'
+    throw err
+  }
+  if (!String(input.course || '').trim()) {
+    const err = new Error('学习笔记必须填写课程名称')
+    err.code = 'INVALID_POST'
+    throw err
+  }
+  if (!NOTE_KINDS[input.noteKind]) {
+    const err = new Error('请选择有效的笔记类型')
+    err.code = 'INVALID_POST'
+    throw err
+  }
+  if (input.chapterOrder !== '' && input.chapterOrder != null && normalizeChapterOrder(input.chapterOrder) == null) {
+    const err = new Error('章节序号必须是非负数字')
+    err.code = 'INVALID_POST'
+    throw err
   }
 }
 
@@ -77,6 +140,14 @@ class PostStore {
     return this.sorted.filter((p) => !p.draft)
   }
 
+  get publishedPosts() {
+    return this.published.filter((p) => p.type === 'post')
+  }
+
+  get publishedNotes() {
+    return this.published.filter((p) => p.type === 'note')
+  }
+
   all(includeDrafts = false) {
     return includeDrafts ? [...this.sorted] : this.published
   }
@@ -86,17 +157,27 @@ class PostStore {
     return p && !p.draft ? p : null
   }
 
+  getPost(slug) {
+    const post = this.get(slug)
+    return post?.type === 'post' ? post : null
+  }
+
+  getNote(slug) {
+    const post = this.get(slug)
+    return post?.type === 'note' ? post : null
+  }
+
   getRaw(slug) {
     return this.posts.get(slug) || null
   }
 
-  byTag(tag) {
-    return this.published.filter((p) => p.tags.includes(tag))
+  byTag(tag, type = 'post') {
+    return this.published.filter((p) => p.type === type && p.tags.includes(tag))
   }
 
-  tags() {
+  tags(type = 'post') {
     const map = new Map()
-    for (const p of this.published) {
+    for (const p of this.published.filter((item) => item.type === type)) {
       for (const t of p.tags) map.set(t, (map.get(t) || 0) + 1)
     }
     return [...map.entries()]
@@ -106,7 +187,7 @@ class PostStore {
 
   archive() {
     const years = new Map()
-    for (const p of this.published) {
+    for (const p of this.publishedPosts) {
       const y = p.date.getFullYear()
       if (!years.has(y)) years.set(y, [])
       years.get(y).push(p)
@@ -114,6 +195,81 @@ class PostStore {
     return [...years.entries()]
       .map(([year, posts]) => ({ year, posts }))
       .sort((a, b) => b.year - a.year)
+  }
+
+  notes(filters = {}) {
+    const year = String(filters.year || '')
+    const course = String(filters.course || '')
+    const kind = String(filters.kind || '')
+    const tag = String(filters.tag || '')
+    const term = filters.term ? Number(filters.term) : null
+    return this.publishedNotes.filter((note) =>
+      (!year || note.academicYear === year) &&
+      (!term || note.term === term) &&
+      (!course || note.course === course) &&
+      (!kind || note.noteKind === kind) &&
+      (!tag || note.tags.includes(tag)),
+    )
+  }
+
+  studyArchive(filters = {}) {
+    const semesters = new Map()
+    for (const note of this.notes(filters)) {
+      const semesterKey = `${note.academicYear}:${note.term}`
+      if (!semesters.has(semesterKey)) {
+        semesters.set(semesterKey, {
+          academicYear: note.academicYear,
+          term: note.term,
+          courses: new Map(),
+        })
+      }
+      const semester = semesters.get(semesterKey)
+      if (!semester.courses.has(note.course)) {
+        semester.courses.set(note.course, {
+          name: note.course,
+          code: note.courseCode,
+          chapters: new Map(),
+          count: 0,
+          updated: note.updated || note.date,
+        })
+      }
+      const course = semester.courses.get(note.course)
+      const chapterName = note.chapter || '综合'
+      if (!course.chapters.has(chapterName)) {
+        course.chapters.set(chapterName, {
+          name: chapterName,
+          order: note.chapterOrder,
+          notes: [],
+        })
+      }
+      const chapter = course.chapters.get(chapterName)
+      chapter.notes.push(note)
+      if (chapter.order == null && note.chapterOrder != null) chapter.order = note.chapterOrder
+      course.count += 1
+      const changed = note.updated || note.date
+      if (changed > course.updated) course.updated = changed
+      if (!course.code && note.courseCode) course.code = note.courseCode
+    }
+
+    return [...semesters.values()]
+      .sort((a, b) => b.academicYear.localeCompare(a.academicYear) || b.term - a.term)
+      .map((semester) => ({
+        ...semester,
+        courses: [...semester.courses.values()]
+          .sort((a, b) => a.name.localeCompare(b.name, 'zh'))
+          .map((course) => ({
+            ...course,
+            chapters: [...course.chapters.values()]
+              .sort((a, b) =>
+                (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
+                a.name.localeCompare(b.name, 'zh'),
+              )
+              .map((chapter) => ({
+                ...chapter,
+                notes: chapter.notes.sort(compareNotes).map((note) => this.toListModel(note)),
+              })),
+          })),
+      }))
   }
 
   plain(post) {
@@ -127,7 +283,7 @@ class PostStore {
   }
 
   neighbors(slug) {
-    const list = this.published
+    const list = this.publishedPosts
     const idx = list.findIndex((p) => p.slug === slug)
     if (idx === -1) return { prev: null, next: null }
     return {
@@ -136,9 +292,28 @@ class PostStore {
     }
   }
 
+  noteNeighbors(slug) {
+    const note = this.getNote(slug)
+    if (!note) return { prev: null, next: null }
+    const list = this.publishedNotes
+      .filter((item) =>
+        item.academicYear === note.academicYear &&
+        item.term === note.term &&
+        item.course === note.course,
+      )
+      .sort(compareNotes)
+    const idx = list.findIndex((item) => item.slug === slug)
+    return {
+      prev: idx > 0 ? list[idx - 1] : null,
+      next: idx >= 0 && idx < list.length - 1 ? list[idx + 1] : null,
+    }
+  }
+
   toListModel(post) {
     return {
       slug: post.slug,
+      type: post.type,
+      url: post.type === 'note' ? `/notes/${encodeURIComponent(post.slug)}` : `/posts/${encodeURIComponent(post.slug)}`,
       title: post.title,
       date: post.date,
       dateISO: post.date.toISOString(),
@@ -149,6 +324,14 @@ class PostStore {
       cover: post.cover,
       readingTime: readingTime(this.plain(post)),
       draft: post.draft,
+      academicYear: post.academicYear,
+      term: post.term,
+      course: post.course,
+      courseCode: post.courseCode,
+      chapter: post.chapter,
+      chapterOrder: post.chapterOrder,
+      noteKind: post.noteKind,
+      noteKindLabel: post.type === 'note' ? NOTE_KINDS[post.noteKind] || NOTE_KINDS.other : '',
     }
   }
 
@@ -183,14 +366,34 @@ class PostStore {
         : new Date()
     const ymd = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
+    const requestedType = input.type ?? existing?.type ?? 'post'
+    if (!['post', 'note'].includes(requestedType)) {
+      const err = new Error('内容类型只能是普通文章或学习笔记')
+      err.code = 'INVALID_POST'
+      throw err
+    }
+    const type = normalizeType(requestedType)
+    if (type === 'note') validateNoteMetadata(input)
+
     const data = {
       title: input.title || slug,
       slug,
+      type,
       date: ymd,
       tags: normalizeTags(input.tags),
       summary: input.summary || '',
       cover: input.cover || '',
       draft: Boolean(input.draft),
+    }
+    if (type === 'note') {
+      data.academicYear = String(input.academicYear).trim()
+      data.term = Number(input.term)
+      data.course = String(input.course).trim()
+      data.courseCode = String(input.courseCode || '').trim()
+      data.chapter = String(input.chapter || '').trim()
+      const order = normalizeChapterOrder(input.chapterOrder)
+      if (order != null) data.chapterOrder = order
+      data.noteKind = input.noteKind
     }
     if (input.updated) data.updated = input.updated
 
@@ -213,6 +416,12 @@ class PostStore {
     this.reload()
     return true
   }
+}
+
+function compareNotes(a, b) {
+  return (a.chapterOrder ?? Number.MAX_SAFE_INTEGER) - (b.chapterOrder ?? Number.MAX_SAFE_INTEGER) ||
+    a.date - b.date ||
+    a.title.localeCompare(b.title, 'zh')
 }
 
 export function dateFormatted(d) {

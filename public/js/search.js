@@ -14,10 +14,12 @@ export function initSearch() {
     }
     const items = list
       .map((r) => {
-        const meta = [r.post.dateFormatted]
-        return `<a class="drop-item" href="/posts/${encodeURIComponent(r.post.slug)}">
+        const meta = r.post.type === 'note'
+          ? ['学习笔记', r.post.course, r.post.dateFormatted]
+          : [r.post.dateFormatted]
+        return `<a class="drop-item" href="${r.post.url}">
           <strong>${escapeHtml(r.post.title)}</strong>
-          <span class="drop-meta">${meta.join(' · ')}</span>
+          <span class="drop-meta">${meta.map(escapeHtml).join(' · ')}</span>
           <span class="drop-snippet">${r.snippet}</span>
         </a>`
       })

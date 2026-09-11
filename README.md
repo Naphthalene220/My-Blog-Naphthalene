@@ -7,6 +7,7 @@
 - **风格**：森林绿 · 冷色调 · 构成主义（苏式美学）· 宏大沉默物体
 - **渲染**：服务端渲染（EJS），无前端框架，客户端仅用原生 ES Modules 增强交互
 - **能力**：代码高亮、数学公式（KaTeX）、图片画廊、日/夜间模式、微交互、顶栏搜索框（即输即搜）、RSS、归档（含侧栏标签筛选）
+- **学习笔记**：按学年、学期、课程与章节归档，支持类型/标签筛选、课程内导航和独立 RSS
 - **后台**：自建（登录鉴权 + Markdown 编辑器 + 实时预览 + 图片上传 + 关于页编辑），写操作带 CSRF 防护
 
 ## 快速开始
@@ -24,7 +25,9 @@ npm start                   # 或 npm run dev（监听模式）
 | `/` | 首页（文章列表，分页） |
 | `/posts/:slug` | 文章详情 |
 | `/archive`（`?tag=` 筛选）`/about` `/search` | 归档（含标签侧栏）/ 关于 / 搜索 |
+| `/study` `/notes/:slug` | 大学学习笔记归档 / 笔记详情 |
 | `/feed.xml`（或 `/rss.xml`） | RSS 订阅 |
+| `/study/feed.xml` | 学习笔记 RSS |
 | `/sitemap.xml` | 站点地图 |
 | `/admin` | 后台 |
 
@@ -59,6 +62,31 @@ draft: false               # true 表示草稿，不对外展示
 ```
 
 或直接在后台 `/admin` 里写。直接放入 `.md` 文件后，站点会自动热重载，无需重启。
+
+## 写一篇学习笔记
+
+学习笔记仍放在 `content/posts/`，通过额外的 frontmatter 与普通文章区分：
+
+```markdown
+---
+type: note
+title: "函数与极限"
+date: "2026-09-11"
+academicYear: "2026-2027"
+term: 1
+course: "高等数学"
+courseCode: "MATH101"       # 可选
+chapter: "第一章 函数与极限" # 可选，留空归入“综合”
+chapterOrder: 1              # 可选，非负数字
+noteKind: lecture            # lecture/textbook/lab/assignment/review/other
+tags: [数学, 极限]
+draft: false
+---
+
+正文……
+```
+
+学习笔记不会出现在普通首页、文章归档或主 RSS 中；公开笔记会进入全站搜索、`/study` 和学习笔记 RSS。旧文章未设置 `type` 时自动视为普通文章。
 
 ### 支持的 Markdown 扩展
 

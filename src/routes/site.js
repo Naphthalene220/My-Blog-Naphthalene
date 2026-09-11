@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { store } from '../store/posts.js'
+import { store, NOTE_KINDS } from '../store/posts.js'
 import { searchIndex } from '../store/search.js'
 import { readPage } from '../store/pages.js'
 import { site } from '../config.js'
@@ -23,7 +23,7 @@ function paginate(list, page, perPage) {
 function renderHome(req, res) {
   const perPage = site.paginate || 8
   const page = Math.max(1, parseInt(req.query.page, 10) || 1)
-  const pg = paginate(store.published, page, perPage)
+  const pg = paginate(store.publishedPosts, page, perPage)
   const posts = pg.items.map((p) => store.toListModel(p))
   res.render('pages/home', {
     pageTitle: site.title,
@@ -41,7 +41,7 @@ router.get('/page/:num', (req, res) => {
 })
 
 router.get('/posts/:slug', (req, res, next) => {
-  const post = store.get(req.params.slug)
+  const post = store.getPost(req.params.slug)
   if (!post) return next()
   const { prev: prevPost, next: nextPost } = store.neighbors(post.slug)
   res.render('pages/post', {
@@ -50,6 +50,42 @@ router.get('/posts/:slug', (req, res, next) => {
     post: store.toDetailModel(post),
     prev: prevPost ? store.toListModel(prevPost) : null,
     next: nextPost ? store.toListModel(nextPost) : null,
+  })
+})
+
+router.get('/notes/:slug', (req, res, next) => {
+  const note = store.getNote(req.params.slug)
+  if (!note) return next()
+  const { prev, next: nextNote } = store.noteNeighbors(note.slug)
+  res.render('pages/note', {
+    pageTitle: note.title,
+    description: note.summary || '',
+    note: store.toDetailModel(note),
+    prev: prev ? store.toListModel(prev) : null,
+    next: nextNote ? store.toListModel(nextNote) : null,
+  })
+})
+
+router.get('/study', (req, res) => {
+  const filters = {
+    year: String(req.query.year || ''),
+    term: [1, 2].includes(Number(req.query.term)) ? Number(req.query.term) : '',
+    course: String(req.query.course || ''),
+    kind: NOTE_KINDS[req.query.kind] ? String(req.query.kind) : '',
+    tag: String(req.query.tag || ''),
+  }
+  const allNotes = store.publishedNotes
+  const years = [...new Set(allNotes.map((note) => note.academicYear))].sort().reverse()
+  const courses = [...new Set(allNotes.map((note) => note.course))].sort((a, b) => a.localeCompare(b, 'zh'))
+  res.render('pages/study', {
+    pageTitle: '大学学习笔记',
+    description: '按学年、学期、课程与章节整理的大学学习笔记。',
+    archive: store.studyArchive(filters),
+    filters,
+    years,
+    courses,
+    kinds: NOTE_KINDS,
+    tags: store.tags('note'),
   })
 })
 

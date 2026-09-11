@@ -7,7 +7,7 @@ import { dateLong } from './store/posts.js'
 import siteRouter from './routes/site.js'
 import apiRouter from './routes/api.js'
 import adminRouter from './routes/admin.js'
-import { rssXml, sitemapXml } from './render/feed.js'
+import { rssXml, studyRssXml, sitemapXml } from './render/feed.js'
 
 export function createApp() {
   const app = express()
@@ -55,6 +55,7 @@ export function createApp() {
 
   app.get('/feed.xml', (req, res) => res.type('application/rss+xml').send(rssXml()))
   app.get('/rss.xml', (req, res) => res.type('application/rss+xml').send(rssXml()))
+  app.get('/study/feed.xml', (req, res) => res.type('application/rss+xml').send(studyRssXml()))
   app.get('/sitemap.xml', (req, res) => res.type('application/xml').send(sitemapXml()))
 
   app.use('/api', apiRouter)

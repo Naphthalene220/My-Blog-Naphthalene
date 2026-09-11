@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="<%= site.language %>">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="container">
+    <div class="post-layout">
+      <article class="post note-detail">
+        <nav class="note-breadcrumb" aria-label="面包屑">
+          <a href="/study">学习笔记</a><span>/</span>
+          <a href="/study?year=<%= encodeURIComponent(note.academicYear) %>&term=<%= note.term %>"><%= note.academicYear %> 第<%= note.term === 1 ? '一' : '二' %>学期</a><span>/</span>
+          <a href="/study?year=<%= encodeURIComponent(note.academicYear) %>&term=<%= note.term %>&course=<%= encodeURIComponent(note.course) %>"><%= note.course %></a>
+        </nav>
+        <header class="post-header">
+          <div class="post-kicker">
+            <span class="note-kind"><%= note.noteKindLabel %></span>
+            <% if (note.chapter) { %><span class="sep">/</span><span><%= note.chapter %></span><% } %>
+          </div>
+          <h1 class="post-title"><%= note.title %></h1>
+          <div class="post-meta">
+            <time datetime="<%= note.dateISO %>"><%= note.dateFormatted %></time>
+            <span class="sep">·</span><span>约 <%= note.readingTime %> 分钟</span>
+            <% if (note.courseCode) { %><span class="sep">·</span><span><%= note.courseCode %></span><% } %>
+            <% for (const tag of note.tags) { %><a class="tag" href="/study?tag=<%= encodeURIComponent(tag) %>">#<%= tag %></a><% } %>
+          </div>
+        </header>
+
+        <% if (note.cover) { %><figure class="post-cover"><img src="<%= note.cover %>" alt="<%= note.title %>" /></figure><% } %>
+        <div class="post-body typography"><%- note.html %></div>
+
+        <nav class="post-nav">
+          <div><% if (prev) { %><span class="post-nav-label">← 同课程上一篇</span><a href="<%= prev.url %>"><%= prev.title %></a><% } %></div>
+          <div class="post-nav-next"><% if (next) { %><span class="post-nav-label">同课程下一篇 →</span><a href="<%= next.url %>"><%= next.title %></a><% } %></div>
+        </nav>
+      </article>
+
+      <aside class="post-toc" id="post-toc"><div class="toc-sticky"><div class="toc-head"><h4 class="toc-title">目录</h4><span class="toc-progress" id="toc-progress">0%</span></div><nav class="toc-nav" id="toc-nav"></nav></div></aside>
+    </div>
+  </main>
+  <div class="read-progress" id="read-progress" aria-hidden="true"><span id="read-progress-bar"></span></div>
+  <%- include('../partials/footer') %>
+</body>
+</html>

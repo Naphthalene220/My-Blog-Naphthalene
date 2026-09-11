@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { Router } from 'express'
 import multer from 'multer'
-import { store, dateFormatted } from '../store/posts.js'
+import { store, dateFormatted, NOTE_KINDS } from '../store/posts.js'
 import { searchIndex } from '../store/search.js'
 import { readPage, writePage } from '../store/pages.js'
 import { renderMarkdown } from '../render/markdown.js'
@@ -110,15 +110,18 @@ router.get('/', requireAuth, (req, res) => res.redirect('/admin/posts'))
 router.get('/posts', requireAuth, (req, res) => {
   const posts = store.all(true).map((p) => ({
     slug: p.slug,
+    type: p.type,
     title: p.title,
     date: dateFormatted(p.date),
     tags: p.tags,
     draft: p.draft,
+    course: p.course,
   }))
   res.render('admin/dashboard', {
     pageTitle: '文章管理 · 后台',
     posts,
     site,
+    noteKinds: NOTE_KINDS,
     layout: false,
   })
 })
@@ -129,6 +132,7 @@ router.get('/posts/:slug', requireAuth, (req, res) => {
   res.json({
     post: {
       slug: post.slug,
+      type: post.type,
       title: post.title,
       date: dateFormatted(post.date),
       updated: post.updated ? dateFormatted(post.updated) : '',
@@ -136,6 +140,13 @@ router.get('/posts/:slug', requireAuth, (req, res) => {
       summary: post.summary,
       cover: post.cover,
       draft: post.draft,
+      academicYear: post.academicYear,
+      term: post.term,
+      course: post.course,
+      courseCode: post.courseCode,
+      chapter: post.chapter,
+      chapterOrder: post.chapterOrder,
+      noteKind: post.noteKind,
       content: post.source,
     },
   })
@@ -148,6 +159,7 @@ router.post('/posts', requireAuth, requireCsrf, (req, res) => {
     post = store.savePost(
       {
         slug: b.slug,
+        type: b.type,
         title: b.title,
         date: b.date,
         updated: b.updated || undefined,
@@ -155,11 +167,20 @@ router.post('/posts', requireAuth, requireCsrf, (req, res) => {
         summary: b.summary,
         cover: b.cover,
         draft: b.draft,
+        academicYear: b.academicYear,
+        term: b.term,
+        course: b.course,
+        courseCode: b.courseCode,
+        chapter: b.chapter,
+        chapterOrder: b.chapterOrder,
+        noteKind: b.noteKind,
       },
       b.content,
     )
   } catch (err) {
-    if (err.code === 'INVALID_SLUG') return res.status(400).json({ error: err.message })
+    if (err.code === 'INVALID_SLUG' || err.code === 'INVALID_POST') {
+      return res.status(400).json({ error: err.message })
+    }
     throw err
   }
   searchIndex.rebuild()

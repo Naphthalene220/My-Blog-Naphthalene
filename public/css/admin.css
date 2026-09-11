@@ -200,6 +200,29 @@
   margin: 14px 2px 8px;
 }
 
+.admin-type-filter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.admin-type-filter button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  padding: 6px 3px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.admin-type-filter button.is-active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .admin-list {
   list-style: none;
   margin: 0;
@@ -288,6 +311,8 @@
 
 .admin-field input[type="text"],
 .admin-field input[type="date"],
+.admin-field input[type="number"],
+.admin-field select,
 .admin-field textarea {
   width: 100%;
   padding: 11px 13px;
@@ -300,7 +325,28 @@
   font-family: inherit;
 }
 
+.admin-note-fields {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  background: var(--bg-2);
+  border-radius: var(--radius);
+}
+
+.admin-note-fields .admin-fields-row + .admin-fields-row {
+  margin-top: 14px;
+}
+
+.admin-note-course-row {
+  grid-template-columns: 1fr 220px;
+}
+
+.admin-field-type {
+  max-width: 220px;
+}
+
 .admin-field input:focus,
+.admin-field select:focus,
 .admin-field textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
@@ -486,6 +532,9 @@
     max-height: 240px;
   }
   .admin-fields-row {
+    grid-template-columns: 1fr;
+  }
+  .admin-note-course-row {
     grid-template-columns: 1fr;
   }
 }

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="<%= site.language %>">
+<head>
+  <%- include('../partials/head') %>
+  <link rel="alternate" type="application/rss+xml" title="<%= site.title %> 学习笔记 RSS" href="/study/feed.xml" />
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="container">
+    <header class="page-head study-head">
+      <p class="study-eyebrow">UNIVERSITY / NOTEBOOK</p>
+      <h1 class="page-title"><span class="idx">03</span>大学学习笔记</h1>
+      <p class="page-desc">按学年、学期、课程与章节整理的知识档案。</p>
+    </header>
+
+    <form class="study-filters" action="/study" method="get">
+      <label>学年
+        <select name="year">
+          <option value="">全部学年</option>
+          <% for (const year of years) { %><option value="<%= year %>" <%= filters.year === year ? 'selected' : '' %>><%= year %></option><% } %>
+        </select>
+      </label>
+      <label>学期
+        <select name="term">
+          <option value="">全部学期</option>
+          <option value="1" <%= filters.term === 1 ? 'selected' : '' %>>第一学期</option>
+          <option value="2" <%= filters.term === 2 ? 'selected' : '' %>>第二学期</option>
+        </select>
+      </label>
+      <label>课程
+        <select name="course">
+          <option value="">全部课程</option>
+          <% for (const course of courses) { %><option value="<%= course %>" <%= filters.course === course ? 'selected' : '' %>><%= course %></option><% } %>
+        </select>
+      </label>
+      <label>类型
+        <select name="kind">
+          <option value="">全部类型</option>
+          <% for (const [value, label] of Object.entries(kinds)) { %><option value="<%= value %>" <%= filters.kind === value ? 'selected' : '' %>><%= label %></option><% } %>
+        </select>
+      </label>
+      <% if (filters.tag) { %><input type="hidden" name="tag" value="<%= filters.tag %>" /><% } %>
+      <button type="submit">筛选</button>
+      <% if (filters.year || filters.term || filters.course || filters.kind || filters.tag) { %><a href="/study">清除</a><% } %>
+    </form>
+
+    <div class="study-layout">
+      <div class="study-main">
+        <% if (!archive.length) { %><p class="muted">当前筛选下暂无学习笔记。<a href="/study">查看全部</a></p><% } %>
+        <% for (const semester of archive) { %>
+          <section class="semester-group">
+            <header class="semester-title">
+              <span><%= semester.academicYear.replace('-', '–') %></span>
+              <strong>第 <%= semester.term === 1 ? '一' : '二' %> 学期</strong>
+            </header>
+            <div class="course-grid">
+              <% for (const course of semester.courses) { %>
+                <article class="course-card reveal" data-reveal>
+                  <header class="course-head">
+                    <div>
+                      <% if (course.code) { %><span class="course-code"><%= course.code %></span><% } %>
+                      <h2><%= course.name %></h2>
+                    </div>
+                    <span class="course-count"><%= course.count %> 篇</span>
+                  </header>
+                  <% for (const chapter of course.chapters) { %>
+                    <section class="chapter-group">
+                      <h3><%= chapter.name %></h3>
+                      <ul>
+                        <% for (const note of chapter.notes) { %>
+                          <li>
+                            <a href="<%= note.url %>"><%= note.title %></a>
+                            <span><%= note.noteKindLabel %> · <%= note.dateFormatted %></span>
+                          </li>
+                        <% } %>
+                      </ul>
+                    </section>
+                  <% } %>
+                </article>
+              <% } %>
+            </div>
+          </section>
+        <% } %>
+      </div>
+
+      <aside class="archive-sidebar study-sidebar">
+        <h2 class="sidebar-title"><span class="idx">TAGS</span>笔记标签</h2>
+        <ul class="tag-bar">
+          <% for (const tag of tags) { %>
+            <li><a href="/study?tag=<%= encodeURIComponent(tag.name) %>" class="<%= filters.tag === tag.name ? 'is-active' : '' %>">
+              <span class="tag-bar-name">#<%= tag.name %></span><span class="tag-bar-count"><%= tag.count %></span>
+            </a></li>
+          <% } %>
+        </ul>
+        <a class="study-feed-link" href="/study/feed.xml">学习笔记 RSS →</a>
+      </aside>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

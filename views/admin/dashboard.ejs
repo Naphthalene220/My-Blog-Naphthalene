@@ -29,11 +29,16 @@
     <aside class="admin-sidebar">
       <button class="admin-new" id="btn-new" type="button">＋ 新建文章</button>
       <p class="admin-sidebar-count">共 <%= posts.length %> 篇</p>
+      <div class="admin-type-filter" id="admin-type-filter">
+        <button type="button" class="is-active" data-filter="all">全部</button>
+        <button type="button" data-filter="post">文章</button>
+        <button type="button" data-filter="note">学习笔记</button>
+      </div>
       <ul class="admin-list" id="admin-list">
         <% for (const p of posts) { %>
-          <li class="admin-list-item <%= p.draft ? 'is-draft' : '' %>" data-slug="<%= p.slug %>">
+          <li class="admin-list-item <%= p.draft ? 'is-draft' : '' %>" data-slug="<%= p.slug %>" data-type="<%= p.type %>">
             <span class="admin-list-title"><%= p.title %></span>
-            <span class="admin-list-meta"><%= p.date %><% if (p.draft) { %> · 草稿<% } %></span>
+            <span class="admin-list-meta"><%= p.type === 'note' ? '学习笔记 · ' + p.course + ' · ' : '' %><%= p.date %><% if (p.draft) { %> · 草稿<% } %></span>
           </li>
         <% } %>
       </ul>
@@ -42,9 +47,60 @@
     <main class="admin-main">
       <form class="admin-form" id="post-form">
         <input type="hidden" id="f-slug" />
+        <label class="admin-field admin-field-type">
+          <span>内容类型</span>
+          <select id="f-type">
+            <option value="post">普通文章</option>
+            <option value="note">学习笔记</option>
+          </select>
+        </label>
         <div class="admin-field admin-field-title">
           <input id="f-title" type="text" placeholder="文章标题" required />
         </div>
+
+        <section class="admin-note-fields" id="note-fields" hidden>
+          <div class="admin-fields-row">
+            <label class="admin-field">
+              <span>学年</span>
+              <input id="f-academic-year" type="text" placeholder="2026-2027" />
+            </label>
+            <label class="admin-field">
+              <span>学期</span>
+              <select id="f-term">
+                <option value="1">第一学期</option>
+                <option value="2">第二学期</option>
+              </select>
+            </label>
+            <label class="admin-field">
+              <span>笔记类型</span>
+              <select id="f-note-kind">
+                <% for (const [value, label] of Object.entries(noteKinds)) { %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% } %>
+              </select>
+            </label>
+          </div>
+          <div class="admin-fields-row admin-note-course-row">
+            <label class="admin-field admin-field-grow">
+              <span>课程名称</span>
+              <input id="f-course" type="text" placeholder="高等数学" />
+            </label>
+            <label class="admin-field">
+              <span>课程代码（可选）</span>
+              <input id="f-course-code" type="text" placeholder="MATH101" />
+            </label>
+          </div>
+          <div class="admin-fields-row admin-note-course-row">
+            <label class="admin-field admin-field-grow">
+              <span>章节（可选）</span>
+              <input id="f-chapter" type="text" placeholder="第一章 函数与极限" />
+            </label>
+            <label class="admin-field">
+              <span>章节序号（可选）</span>
+              <input id="f-chapter-order" type="number" min="0" step="any" placeholder="1" />
+            </label>
+          </div>
+        </section>
         <div class="admin-fields-row">
           <label class="admin-field">
             <span>日期</span>

@@ -1,4 +1,4 @@
-import { store } from './posts.js'
+import { store, NOTE_KINDS } from './posts.js'
 import { escapeHtml } from '../utils.js'
 
 // 分词：拉丁/数字按词，中文按单字 + 二元组，兼顾短查询与长词。
@@ -16,7 +16,7 @@ function tokenize(text) {
   return tokens
 }
 
-const FIELD_WEIGHT = { title: 6, tags: 4, summary: 2, body: 1 }
+const FIELD_WEIGHT = { title: 6, course: 5, chapter: 4, tags: 4, noteKind: 3, summary: 2, body: 1 }
 
 class SearchIndex {
   constructor() {
@@ -34,7 +34,10 @@ class SearchIndex {
         plain: store.plain(post),
         fields: {
           title: tokenize(post.title),
+          course: tokenize(post.course),
+          chapter: tokenize(post.chapter),
           tags: tokenize(post.tags.join(' ')),
+          noteKind: tokenize(post.type === 'note' ? NOTE_KINDS[post.noteKind] || '' : ''),
           summary: tokenize(post.summary),
           body: tokenize(store.plain(post)),
         },
@@ -52,7 +55,7 @@ class SearchIndex {
     }
   }
 
-  search(query, limit = 20) {
+  search(query, limit = 20, filters = {}) {
     if (!query || !String(query).trim()) return []
     const qTokens = [...tokenize(query).keys()]
     if (!qTokens.length) return []
@@ -65,6 +68,8 @@ class SearchIndex {
       for (const { slug, field } of postings) {
         const doc = this.docs.get(slug)
         if (!doc) continue
+        const post = store.get(slug)
+        if (!post || (filters.type && post.type !== filters.type)) continue
         const tf = doc.fields[field].get(token) || 1
         const w = FIELD_WEIGHT[field] || 1
         scores.set(slug, (scores.get(slug) || 0) + idf * w * (1 + Math.log(tf)))
