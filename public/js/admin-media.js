@@ -1,3 +1,5 @@
+import { csrfHeaders } from './util.js'
+
 const statusEl = document.getElementById('status')
 const grid = document.getElementById('media-grid')
 
@@ -42,7 +44,10 @@ if (grid) {
     } else if (btn.dataset.act === 'delete') {
       const name = card.querySelector('.media-name').textContent
       if (!window.confirm(`确认删除「${name}」？此操作不可恢复。`)) return
-      const r = await fetch(`/admin/media?rel=${encodeURIComponent(rel)}`, { method: 'DELETE' })
+      const r = await fetch(`/admin/media?rel=${encodeURIComponent(rel)}`, {
+        method: 'DELETE',
+        headers: csrfHeaders(),
+      })
       const data = await r.json()
       if (!r.ok) return setStatus(data.error || '删除失败', 'err')
       card.remove()

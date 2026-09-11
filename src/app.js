@@ -2,7 +2,7 @@ import express from 'express'
 import path from 'node:path'
 import { PUBLIC_DIR, VIEWS_DIR, IMAGES_DIR, ROOT } from './paths.js'
 import { site, env, assetVersion } from './config.js'
-import { sessionMiddleware } from './auth.js'
+import { sessionMiddleware, attachCsrfToken } from './auth.js'
 import { dateLong } from './store/posts.js'
 import siteRouter from './routes/site.js'
 import apiRouter from './routes/api.js'
@@ -12,6 +12,7 @@ import { rssXml, sitemapXml } from './render/feed.js'
 export function createApp() {
   const app = express()
   app.disable('x-powered-by')
+  if (env.isProduction) app.set('trust proxy', 1)
   app.set('view engine', 'ejs')
   app.set('views', VIEWS_DIR)
 
@@ -57,7 +58,8 @@ export function createApp() {
   app.get('/sitemap.xml', (req, res) => res.type('application/xml').send(sitemapXml()))
 
   app.use('/api', apiRouter)
-  app.use('/admin', adminRouter)
+  // 仅后台需要创建 CSRF 会话，避免给普通访客创建无用 Session。
+  app.use('/admin', attachCsrfToken, adminRouter)
   app.use('/', siteRouter)
 
   // 404

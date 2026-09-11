@@ -4,7 +4,8 @@ import markdownItKatex from 'markdown-it-katex'
 import { escapeAttr, slugify } from '../utils.js'
 
 const md = new MarkdownIt({
-  html: true,
+  // 内容会直接进入公开页面；禁用原始 HTML，避免导入不可信 Markdown 时产生 XSS。
+  html: false,
   linkify: true,
   breaks: false,
   highlight(str, lang) {

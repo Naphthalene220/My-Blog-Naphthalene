@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="csrf-token" content="<%= csrfToken %>" />
   <title>站点设置 · <%= site.title %> 后台</title>
   <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
   <link rel="stylesheet" href="/public/css/main.css?v=<%= assetVersion %>" />
@@ -19,7 +20,7 @@
       <a href="/admin/posts">文章管理</a>
       <a href="/admin/about">关于页</a>
       <a href="/admin/media">图片</a>
-      <form method="post" action="/admin/logout"><button class="linklike" type="submit">退出</button></form>
+      <form method="post" action="/admin/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>" /><button class="linklike" type="submit">退出</button></form>
     </nav>
   </header>
 

@@ -14,6 +14,11 @@ function normalizeTags(tags) {
     .filter(Boolean)
 }
 
+export function isSafeSlug(value) {
+  const slug = String(value || '')
+  return slug.length > 0 && slug.length <= 120 && /^[\p{L}\p{N}_-]+$/u.test(slug)
+}
+
 function toDate(value, fallback) {
   if (value instanceof Date) return value
   const d = new Date(value)
@@ -157,9 +162,19 @@ class PostStore {
 
   savePost(input, body) {
     const existing = input.slug ? this.posts.get(input.slug) : null
-    const slug = input.slug || slugify(input.title)
+    const slug = String(input.slug || slugify(input.title)).trim()
+    if (!isSafeSlug(slug)) {
+      const err = new Error('slug 只能包含文字、数字、连字符和下划线，且不超过 120 个字符')
+      err.code = 'INVALID_SLUG'
+      throw err
+    }
     const filename = `${slug}.md`
-    const file = path.join(POSTS_DIR, filename)
+    const file = path.resolve(POSTS_DIR, filename)
+    if (!file.startsWith(POSTS_DIR + path.sep)) {
+      const err = new Error('slug 超出文章目录')
+      err.code = 'INVALID_SLUG'
+      throw err
+    }
 
     const date = input.date
       ? new Date(input.date)

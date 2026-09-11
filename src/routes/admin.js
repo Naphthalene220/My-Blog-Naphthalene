@@ -6,11 +6,27 @@ import { store, dateFormatted } from '../store/posts.js'
 import { searchIndex } from '../store/search.js'
 import { readPage, writePage } from '../store/pages.js'
 import { renderMarkdown } from '../render/markdown.js'
-import { verifyPassword, requireAuth } from '../auth.js'
+import { verifyPassword, requireAuth, requireCsrf } from '../auth.js'
 import { IMAGES_DIR, UPLOADS_DIR } from '../paths.js'
 import { site, writeSiteConfig } from '../config.js'
+import { allowedImageType, hasValidImageSignature } from '../uploads.js'
 
 const router = Router()
+
+const LOGIN_WINDOW_MS = 15 * 60 * 1000
+const LOGIN_MAX_FAILURES = 5
+const loginAttempts = new Map()
+
+function loginState(key) {
+  const now = Date.now()
+  const state = loginAttempts.get(key)
+  if (!state || now - state.startedAt >= LOGIN_WINDOW_MS) {
+    const fresh = { startedAt: now, failures: 0 }
+    loginAttempts.set(key, fresh)
+    return fresh
+  }
+  return state
+}
 
 // ---------- 登录 ----------
 router.get('/login', (req, res) => {
@@ -18,55 +34,73 @@ router.get('/login', (req, res) => {
   res.render('admin/login', { pageTitle: '登录 · 后台', error: null, layout: false })
 })
 
-router.post('/login', async (req, res) => {
+router.post('/login', requireCsrf, async (req, res) => {
+  const key = req.ip || req.socket.remoteAddress || 'unknown'
+  const state = loginState(key)
+  if (state.failures >= LOGIN_MAX_FAILURES) {
+    return res.status(429).render('admin/login', {
+      pageTitle: '登录 · 后台',
+      error: '尝试次数过多，请 15 分钟后再试',
+      layout: false,
+    })
+  }
   const ok = await verifyPassword(req.body.password)
   if (!ok) {
+    state.failures += 1
     return res.status(401).render('admin/login', {
       pageTitle: '登录 · 后台',
       error: '密码不正确',
       layout: false,
     })
   }
-  req.session.admin = true
-  res.redirect('/admin/posts')
+  loginAttempts.delete(key)
+  req.session.regenerate((err) => {
+    if (err) return res.status(500).send('无法创建登录会话')
+    req.session.admin = true
+    res.redirect('/admin/posts')
+  })
 })
 
-router.post('/logout', (req, res) => {
+router.post('/logout', requireCsrf, (req, res) => {
   req.session.destroy(() => res.redirect('/admin/login'))
 })
 
 // ---------- 图片上传 ----------
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true })
-    cb(null, UPLOADS_DIR)
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase()
-    const base =
-      path
-        .basename(file.originalname, ext)
-        .replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, '-')
-        .slice(0, 60) || 'img'
-    cb(null, `${Date.now()}-${base}${ext}`)
-  },
-})
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (/^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/.test(file.mimetype)) cb(null, true)
-    else cb(new Error('仅支持图片文件'))
+    if (allowedImageType(file.originalname, file.mimetype)) cb(null, true)
+    else cb(new Error('仅支持 JPG、PNG、WebP、GIF 或 AVIF 图片'))
   },
 })
 
-router.post('/upload', requireAuth, upload.single('file'), (req, res) => {
+function uploadOne(req, res, next) {
+  upload.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message })
+    next()
+  })
+}
+
+router.post('/upload', requireAuth, requireCsrf, uploadOne, (req, res) => {
   if (!req.file) return res.status(400).json({ error: '没有收到文件' })
-  res.json({ url: `/content/images/uploads/${req.file.filename}` })
+  const ext = allowedImageType(req.file.originalname, req.file.mimetype)
+  if (!ext || !hasValidImageSignature(req.file.buffer, ext)) {
+    return res.status(400).json({ error: '文件内容与图片格式不符' })
+  }
+  const base =
+    path
+      .basename(req.file.originalname, ext)
+      .replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, '-')
+      .slice(0, 60) || 'img'
+  const filename = `${Date.now()}-${base}${ext}`
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true })
+  fs.writeFileSync(path.join(UPLOADS_DIR, filename), req.file.buffer)
+  res.json({ url: `/content/images/uploads/${filename}` })
 })
 
 // ---------- 预览 ----------
-router.post('/preview', requireAuth, (req, res) => {
+router.post('/preview', requireAuth, requireCsrf, (req, res) => {
   res.json({ html: renderMarkdown(req.body.content || '') })
 })
 
@@ -107,26 +141,32 @@ router.get('/posts/:slug', requireAuth, (req, res) => {
   })
 })
 
-router.post('/posts', requireAuth, (req, res) => {
+router.post('/posts', requireAuth, requireCsrf, (req, res) => {
   const b = req.body || {}
-  const post = store.savePost(
-    {
-      slug: b.slug,
-      title: b.title,
-      date: b.date,
-      updated: b.updated || undefined,
-      tags: b.tags,
-      summary: b.summary,
-      cover: b.cover,
-      draft: b.draft,
-    },
-    b.content,
-  )
+  let post
+  try {
+    post = store.savePost(
+      {
+        slug: b.slug,
+        title: b.title,
+        date: b.date,
+        updated: b.updated || undefined,
+        tags: b.tags,
+        summary: b.summary,
+        cover: b.cover,
+        draft: b.draft,
+      },
+      b.content,
+    )
+  } catch (err) {
+    if (err.code === 'INVALID_SLUG') return res.status(400).json({ error: err.message })
+    throw err
+  }
   searchIndex.rebuild()
   res.json({ ok: true, slug: post.slug })
 })
 
-router.delete('/posts/:slug', requireAuth, (req, res) => {
+router.delete('/posts/:slug', requireAuth, requireCsrf, (req, res) => {
   const ok = store.deletePost(req.params.slug)
   searchIndex.rebuild()
   res.json({ ok })
@@ -142,7 +182,7 @@ router.get('/about', requireAuth, (req, res) => {
   })
 })
 
-router.post('/about', requireAuth, (req, res) => {
+router.post('/about', requireAuth, requireCsrf, (req, res) => {
   writePage('about', req.body.content || '')
   res.json({ ok: true })
 })
@@ -156,7 +196,7 @@ router.get('/settings', requireAuth, (req, res) => {
   })
 })
 
-router.post('/settings', requireAuth, (req, res) => {
+router.post('/settings', requireAuth, requireCsrf, (req, res) => {
   const b = req.body || {}
   const author = b.author || {}
   const links = {}
@@ -173,7 +213,7 @@ router.post('/settings', requireAuth, (req, res) => {
     titleEn: String(b.titleEn ?? site.titleEn),
     tagline: String(b.tagline ?? site.tagline),
     description: String(b.description ?? site.description),
-    paginate: Number(b.paginate) || site.paginate || 8,
+    paginate: Math.min(50, Math.max(1, Number(b.paginate) || site.paginate || 8)),
     footer: String(b.footer ?? site.footer),
     author: {
       ...site.author,
@@ -227,7 +267,7 @@ router.get('/media', requireAuth, (req, res) => {
   })
 })
 
-router.delete('/media', requireAuth, (req, res) => {
+router.delete('/media', requireAuth, requireCsrf, (req, res) => {
   const rel = String(req.query.rel || '')
   if (!rel || rel.includes('..') || rel.startsWith('/') || rel.includes('\\')) {
     return res.status(400).json({ error: 'invalid' })

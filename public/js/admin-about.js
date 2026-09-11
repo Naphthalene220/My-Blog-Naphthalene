@@ -1,3 +1,5 @@
+import { csrfHeaders } from './util.js'
+
 const source = document.getElementById('about-source')
 const statusEl = document.getElementById('about-status')
 const previewBody = document.getElementById('about-preview-body')
@@ -14,7 +16,7 @@ function setStatus(msg, kind = 'ok') {
 saveBtn.addEventListener('click', async () => {
   const r = await fetch('/admin/about', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: csrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ content: source.value }),
   })
   if (!r.ok) return setStatus('保存失败', 'err')
@@ -24,7 +26,7 @@ saveBtn.addEventListener('click', async () => {
 previewBtn.addEventListener('click', async () => {
   const r = await fetch('/admin/preview', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: csrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ content: source.value }),
   })
   const data = await r.json()

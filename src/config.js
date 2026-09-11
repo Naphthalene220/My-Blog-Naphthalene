@@ -29,13 +29,13 @@ export function writeSiteConfig(nextSite) {
 }
 
 // 静态资源版本号：修改 public/ 下的 CSS/JS 后 +1，用于破坏浏览器缓存。
-export const assetVersion = '5'
+export const assetVersion = '6'
 
 export const env = {
+  isProduction: process.env.NODE_ENV === 'production',
   port: Number(process.env.PORT) || 3000,
   adminPassword: process.env.ADMIN_PASSWORD || '',
   sessionSecret: process.env.SESSION_SECRET || '',
   baseUrl: (process.env.BASE_URL || site.baseUrl || `http://localhost:3000`).replace(/\/+$/, ''),
 }
-
 

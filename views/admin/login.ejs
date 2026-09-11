@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="csrf-token" content="<%= csrfToken %>" />
   <title>登录 · <%= site.title %> 后台</title>
   <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
   <link rel="stylesheet" href="/public/css/main.css?v=<%= assetVersion %>" />
@@ -11,13 +12,14 @@
 <body class="admin-body">
   <main class="login-wrap">
     <form class="login-card" method="post" action="/admin/login">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <span class="brand-mark" aria-hidden="true"><span></span></span>
       <p class="login-kicker">TAIGA / ADMIN</p>
       <h1 class="login-title"><%= site.title %> · 后台</h1>
       <% if (error) { %><p class="login-error"><%= error %></p><% } %>
       <label class="login-field">
         <span>密码</span>
-        <input type="password" name="password" placeholder="请输入后台密码" autofocus autocomplete="current-password" />
+        <input type="password" name="password" placeholder="请输入后台密码" autofocus autocomplete="current-password" required />
       </label>
       <button class="login-btn" type="submit">进入后台</button>
       <a class="login-back" href="/">← 返回站点</a>

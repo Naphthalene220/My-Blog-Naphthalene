@@ -1,3 +1,5 @@
+import { csrfHeaders } from './util.js'
+
 const $ = (id) => document.getElementById(id)
 
 const form = {
@@ -108,7 +110,7 @@ async function save() {
   try {
     const r = await fetch('/admin/posts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     })
     const res = await r.json()
@@ -131,7 +133,10 @@ async function save() {
 async function remove() {
   if (!currentSlug) return
   if (!window.confirm(`确认删除「${form.title.value || currentSlug}」？此操作不可恢复。`)) return
-  const r = await fetch(`/admin/posts/${encodeURIComponent(currentSlug)}`, { method: 'DELETE' })
+  const r = await fetch(`/admin/posts/${encodeURIComponent(currentSlug)}`, {
+    method: 'DELETE',
+    headers: csrfHeaders(),
+  })
   if (!r.ok) return setStatus('删除失败', 'err')
   listEl.querySelector(`[data-slug="${currentSlug}"]`)?.remove()
   clearForm()
@@ -141,7 +146,7 @@ async function remove() {
 async function preview() {
   const r = await fetch('/admin/preview', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: csrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ content: form.content.value }),
   })
   const data = await r.json()
@@ -164,7 +169,7 @@ async function handleFile(file) {
   const fd = new FormData()
   fd.append('file', file)
   setStatus('上传中…')
-  const r = await fetch('/admin/upload', { method: 'POST', body: fd })
+  const r = await fetch('/admin/upload', { method: 'POST', headers: csrfHeaders(), body: fd })
   const data = await r.json()
   if (!r.ok) return setStatus(data.error || '上传失败', 'err')
   if (uploadMode === 'cover') {

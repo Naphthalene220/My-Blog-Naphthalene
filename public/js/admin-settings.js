@@ -1,3 +1,5 @@
+import { csrfHeaders } from './util.js'
+
 const $ = (id) => document.getElementById(id)
 const statusEl = $('status')
 
@@ -39,7 +41,7 @@ $('settings-form').addEventListener('submit', async (e) => {
   try {
     const r = await fetch('/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload),
     })
     const data = await r.json()
